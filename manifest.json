@@ -1,0 +1,8 @@
+{
+  "name": "금동이네 꿀복통",
+  "short_name": "꿀복통",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#fff4ea",
+  "theme_color": "#ffe9d6"
+}
