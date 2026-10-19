@@ -28,6 +28,8 @@
 | `assets/icons/` | 앱 아이콘 (192, 512, maskable 512, apple-touch 180). 복숭아 그림 + 메인 배경색 `#fff4ea` |
 | `pwa.js` | 서비스 워커 등록 (https·localhost에서만, 실패해도 앱은 동작) |
 | `sw.js` | 오프라인용 서비스 워커. 온라인이면 항상 최신 파일을 받고(network-first), 받은 파일을 저장해 오프라인에서 씀 |
+| `android/` | 안드로이드 앱 껍데기(WebView). 웹앱 주소(`strings.xml`의 `app_url`)를 열 뿐이라 **웹 파일을 고치면 APK 재설치 없이 반영**. 앱 이름·아이콘·주소를 바꿀 때만 APK를 다시 만든다. 뒤로 버튼은 웹 history를 따라감 |
+| `.github/workflows/build-apk.yml` | GitHub Actions로 APK 빌드. 결과: 릴리스 `apk-latest`의 `geumdongi-peach.apk` (고정 다운로드 링크) |
 | `test.mjs` | 회귀 테스트: `node test.mjs` |
 
 ## 의존 방향
@@ -54,7 +56,9 @@
 - 홈 화면 설치(PWA): 안드로이드 크롬 "앱 설치", 아이폰 사파리 공유 → "홈 화면에 추가"
 - **파일을 추가·삭제하면 `sw.js`의 `PRECACHE` 목록과 `VERSION`도 같이 고친다** (`test.mjs`가 빠진 .js·이미지를 검사)
 - 서비스 워커는 옛 파일을 붙잡을 수 있어, 바뀐 게 안 보이면 앱을 완전히 닫았다 다시 연다
-- APK(안드로이드 앱 파일)는 수정할 부분이 정리된 뒤에 진행할 예정
+- APK: GitHub 저장소 Actions 탭 → "APK 만들기" → Run workflow (android 폴더가 바뀌어 올라가면 자동 실행). 약 3~5분 뒤 `https://github.com/qnrqorrhadl/geumdongi-peach/releases/download/apk-latest/geumdongi-peach.apk`
+- APK는 debug 서명(빌드마다 서명이 달라, 새 APK를 덮어 설치하려면 기존 앱을 지우고 설치). 웹 파일만 고칠 땐 재설치 불필요. 구글 플레이 등록 시에는 정식 서명·targetSdk 상향 필요
+- 이 작업 공간에서는 안드로이드 도구를 받을 수 없어 APK 빌드는 GitHub Actions에서만 검증된다 (코드는 문법만 확인)
 
 ## 다음 단계 (미정)
 

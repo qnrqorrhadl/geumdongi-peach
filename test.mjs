@@ -250,3 +250,23 @@ console.log("모든 테스트 통과");
   assert.ok(pwa.includes("https:") && pwa.includes(".catch("), "pwa.js 안전장치 없음");
   console.log("홈 화면 설치(PWA) 테스트 통과");
 }
+
+// ===== 안드로이드 APK (웹앱 주소를 여는 껍데기) =====
+{
+  const strings = read("android/app/src/main/res/values/strings.xml");
+  const url = strings.match(/name="app_url">([^<]+)</)[1];
+  assert.ok(url.startsWith("https://") && url.endsWith("/"), "app_url은 https 주소로 끝에 / 필요");
+  const manifestXml = read("android/app/src/main/AndroidManifest.xml");
+  assert.ok(manifestXml.includes("android.permission.INTERNET"), "INTERNET 권한 필요");
+  assert.ok(manifestXml.includes('usesCleartextTraffic="false"'), "http 평문 통신 금지");
+  const java = read("android/app/src/main/java/com/geumdongi/peach/MainActivity.java");
+  assert.ok(java.includes("setDomStorageEnabled(true)"), "장바구니 저장(localStorage)에 DOM 저장소 필요");
+  assert.ok(java.includes("onBackPressed") && java.includes("canGoBack"), "안드로이드 뒤로 버튼 처리 없음");
+  assert.ok(read("android/app/build.gradle").includes("applicationId 'com.geumdongi.peach'"), "applicationId 변경됨 (바꾸면 새 앱으로 인식)");
+  for (const f of ["android/settings.gradle", "android/build.gradle", ".github/workflows/build-apk.yml",
+    "android/app/src/main/res/mipmap-xxxhdpi/ic_launcher.png", "android/app/src/main/res/mipmap-xxxhdpi/ic_launcher_foreground.png",
+    "android/app/src/main/res/mipmap-anydpi-v26/ic_launcher.xml"]) assert.ok(existsSync(new URL(`./${f}`, import.meta.url)), `${f} 없음`);
+  const wf = read(".github/workflows/build-apk.yml");
+  assert.ok(wf.includes("workflow_dispatch") && wf.includes("assembleDebug") && wf.includes("apk-latest"), "워크플로 항목 누락");
+  console.log("안드로이드 APK 구성 테스트 통과");
+}
