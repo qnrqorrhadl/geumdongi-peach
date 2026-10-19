@@ -24,7 +24,10 @@
 | `cartScreen.js` | 장바구니 화면: −/+ 수량, 삭제, 전체 비우기, 합계 |
 | `order.js` | 주문하기 확인 흐름 (요약·합계 확인 → "접수는 다음 단계" 안내, 장바구니는 유지) |
 | `dialog.js` | 앱 자체 대화상자 `ask()` |
-| `manifest.json` | 홈 화면 설치 정보 |
+| `manifest.json` | 홈 화면 설치 정보 (이름, 아이콘, 전체 화면 standalone) |
+| `assets/icons/` | 앱 아이콘 (192, 512, maskable 512, apple-touch 180). 복숭아 그림 + 메인 배경색 `#fff4ea` |
+| `pwa.js` | 서비스 워커 등록 (https·localhost에서만, 실패해도 앱은 동작) |
+| `sw.js` | 오프라인용 서비스 워커. 온라인이면 항상 최신 파일을 받고(network-first), 받은 파일을 저장해 오프라인에서 씀 |
 | `test.mjs` | 회귀 테스트: `node test.mjs` |
 
 ## 의존 방향
@@ -44,6 +47,14 @@
 - 뒤로·−/+·삭제 버튼은 눈에 보이는 크기 36px, 누르는 범위 `::after`로 44px. 눌림 표시는 색만 (scale은 누르는 범위를 줄임)
 - 글씨체 주아체 하나(`font-synthesis:none`, 버튼 `font-family:inherit`). '둥근굴림'은 라이선스 확인 불가로 미사용
 - 효능 글은 영양 성분 사실만 (질병 예방·치료 표현 금지). 백도·천도 글은 초안, 실제 영양 표시와 대조 필요
+
+## 배포·설치
+
+- GitHub Pages로 공개: `https://qnrqorrhadl.github.io/geumdongi-peach/` (main 브랜치 루트). 파일을 올리면 1~2분 뒤 반영
+- 홈 화면 설치(PWA): 안드로이드 크롬 "앱 설치", 아이폰 사파리 공유 → "홈 화면에 추가"
+- **파일을 추가·삭제하면 `sw.js`의 `PRECACHE` 목록과 `VERSION`도 같이 고친다** (`test.mjs`가 빠진 .js·이미지를 검사)
+- 서비스 워커는 옛 파일을 붙잡을 수 있어, 바뀐 게 안 보이면 앱을 완전히 닫았다 다시 연다
+- APK(안드로이드 앱 파일)는 수정할 부분이 정리된 뒤에 진행할 예정
 
 ## 다음 단계 (미정)
 

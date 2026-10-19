@@ -5,6 +5,7 @@ import { initHome } from "./home.js";
 import { initDetail, renderDetail } from "./detail.js";
 import { initOrderScreen } from "./orderScreen.js";
 import { initCartScreen } from "./cartScreen.js";
+import { registerOffline } from "./pwa.js";
 
 const $ = (id) => document.getElementById(id);
 
@@ -25,3 +26,4 @@ initDetail();
 initOrderScreen();
 initCartScreen();
 startRouting(showRoute);
+registerOffline();

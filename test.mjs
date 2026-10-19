@@ -220,3 +220,33 @@ console.log("모든 테스트 통과");
   assert.ok(gap >= 8, "−/+ 누름 범위가 줄끼리 겹침");
   console.log("주문 화면 −/+ 테스트 통과");
 }
+
+// ===== 홈 화면 설치(PWA) =====
+{
+  const manifest = JSON.parse(read("manifest.json"));
+  assert.equal(manifest.display, "standalone");
+  assert.ok(manifest.name && manifest.short_name && manifest.start_url, "manifest 기본 항목 누락");
+  const sizes = manifest.icons.map((i) => i.sizes);
+  assert.ok(sizes.includes("192x192") && sizes.includes("512x512"), "192/512 아이콘 필요");
+  assert.ok(manifest.icons.some((i) => i.purpose === "maskable"), "maskable 아이콘 필요");
+  for (const i of manifest.icons) assert.ok(existsSync(new URL(`./${i.src}`, import.meta.url)), `${i.src} 없음`);
+  assert.ok(existsSync(new URL("./assets/icons/apple-touch-icon.png", import.meta.url)), "apple-touch-icon 없음");
+  const html2 = read("index.html");
+  assert.ok(html2.includes('rel="manifest"') && html2.includes("apple-touch-icon"), "index.html에 설치 정보 연결 없음");
+
+  // 오프라인용 파일 목록이 실제 앱 파일(모든 .js 모듈, 이미지, 글씨체 css)을 빠뜨리지 않았는가
+  const sw = read("sw.js");
+  const list = JSON.parse(sw.match(/const PRECACHE = (\[[\s\S]*?\]);/)[1]);
+  for (const f of list.filter((x) => x !== "./")) assert.ok(existsSync(new URL(`./${f}`, import.meta.url)), `PRECACHE에 없는 파일: ${f}`);
+  const appJs = readdirSync(new URL("./", import.meta.url)).filter((f) => f.endsWith(".js") && !["sw.js", "test.mjs"].includes(f));
+  for (const f of appJs) assert.ok(list.includes(f), `오프라인 목록에 ${f} 빠짐 (sw.js PRECACHE에 추가하고 VERSION을 올리세요)`);
+  for (const f of ["style.css", "index.html", "manifest.json", "assets/fonts/jua/fonts.css"]) assert.ok(list.includes(f), `오프라인 목록에 ${f} 빠짐`);
+  for (const p of CONFIG.products) for (const src of [p.detail.image.src]) assert.ok(list.includes(src), `오프라인 목록에 ${src} 빠짐`);
+  assert.ok(list.includes(CONFIG.tagline.src), "오프라인 목록에 글귀 이미지 빠짐");
+  assert.ok(sw.includes("skipWaiting") && sw.includes("caches.delete"), "옛 저장분 정리 없음");
+
+  // 등록 코드는 https/localhost에서만, 실패해도 앱을 막지 않음
+  const pwa = read("pwa.js");
+  assert.ok(pwa.includes("https:") && pwa.includes(".catch("), "pwa.js 안전장치 없음");
+  console.log("홈 화면 설치(PWA) 테스트 통과");
+}
