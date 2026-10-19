@@ -3,12 +3,12 @@ import { ask } from "./dialog.js";
 import { getCart, clearCart } from "./store.js";
 import { lines, total, formatPrice } from "./cart.js";
 import { isValidPhone, isIos, buildSmsUrl, buildOrderText } from "./sms.js";
-import { navigate, goHome } from "./nav.js";
+import { goHome, goOrder } from "./nav.js";
 
 // 주문 흐름 (장바구니 화면의 주문하기). 접수 방식은 문자(SMS):
 // 문자 앱이 열리고 주문 내용이 미리 적혀 있어, 손님이 전송만 누르면 된다. 따로 확인 질문은 하지 않는다.
 // 문자 앱을 연 시점에 장바구니를 비운다 (돌아와서 같은 주문을 또 보내는 일을 막기 위해).
-// 돌아오면 추가 주문 여부를 묻는다: 추가 주문 → 장바구니 화면, 아니요 → 메인 화면.
+// 돌아오면 추가 주문 여부를 묻는다: 추가 주문 → 주문 화면, 아니요 → 메인 화면.
 export async function submitOrder() {
   const cartNow = getCart();
   const items = lines(cartNow, CONFIG.products);
@@ -33,7 +33,7 @@ export async function submitOrder() {
     cancelText: CONFIG.dialog.moreNo,
   });
   if (more) {
-    if (location.hash !== "#cart") navigate("#cart");
+    goOrder();
   } else {
     goHome();
   }

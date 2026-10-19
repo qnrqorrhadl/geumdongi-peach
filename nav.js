@@ -28,17 +28,28 @@ export function goBack() {
   onRoute(currentRoute());
 }
 
-// 메인 화면으로 돌아간다. 앱 안에서 쌓인 화면 기록을 걷어내서, 폰 뒤로가기를 눌렀을 때 방금 있던 화면으로 되돌아가지 않게 한다.
-export function goHome() {
-  const toHome = () => {
-    history.replaceState({ depth: 0 }, "", "#");
+// 화면 기록을 level 단계까지 걷어내고 그 자리를 hash 화면으로 바꾼다.
+// 폰 뒤로가기를 눌렀을 때 방금 있던 화면(예: 비워진 장바구니)으로 되돌아가지 않게 한다.
+function resetTo(hash, level) {
+  const steps = depth() - level;
+  if (steps <= 0) {
+    history.replaceState({ depth: depth() }, "", hash);
     onRoute(currentRoute());
-  };
-  const steps = depth();
-  if (steps === 0) {
-    toHome();
     return;
   }
-  window.addEventListener("popstate", toHome, { once: true });
+  window.addEventListener(
+    "popstate",
+    () => {
+      history.replaceState({ depth: level }, "", hash);
+      onRoute(currentRoute());
+    },
+    { once: true },
+  );
   history.go(-steps);
 }
+
+// 메인 화면으로
+export const goHome = () => resetTo("#", 0);
+
+// 주문 화면으로 (메인 → 주문 한 단계 위치로 맞춘다)
+export const goOrder = () => resetTo("#order", 1);
