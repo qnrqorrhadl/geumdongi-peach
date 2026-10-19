@@ -78,6 +78,7 @@ export const CONFIG = {
     cancel: "취소",
     emptyOrder: "장바구니가 비었어요.\n상품을 먼저 담아주세요",
     maxQty: (max) => `한 상품은 최대 ${max}개까지\n담을 수 있어요`,
+    confirmOrder: (summary, total) => `${summary}\n합계 ${total}\n\n이걸로 주문할까요?`,
     clearConfirm: "장바구니를 모두 비울까요?",
     noPhone: "주문을 받는 번호가 아직 정해지지 않았어요.\n잠시 후 다시 시도해 주세요",
     moreOrder: "주문해 주셔서 감사해요!\n추가 주문을 하시겠어요?",
