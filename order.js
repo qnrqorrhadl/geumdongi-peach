@@ -22,6 +22,8 @@ export async function submitOrder() {
   }
   const summary = items.map((l) => `${l.name} ${CONFIG.productSuffix} ${CONFIG.order.qty(l.qty)}`).join("\n");
   const sum = formatPrice(total(cartNow, CONFIG.products), CONFIG.priceUnit);
+  const ok = await ask(CONFIG.dialog.confirmOrder(summary, sum), { showCancel: true });
+  if (!ok) return; // 취소하면 장바구니 그대로
   const body = buildOrderText(CONFIG.order.smsHeader, summary, sum, CONFIG.order.total);
 
   clearCart();
