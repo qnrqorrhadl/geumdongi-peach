@@ -13,7 +13,7 @@ export const CONFIG = {
   productSuffix: "꿀 통조림",
   priceUnit: "원",
   // 주문 문자를 받을 번호 (주인 휴대폰). 숫자만 써도 되고 010-1234-5678 처럼 써도 된다. 비어 있으면 주문이 막힌다.
-  orderPhone: "01023170771",
+  orderPhone: "010-2317-0771",
   maxQty: 99, // 한 상품당 장바구니에 담을 수 있는 최대 개수
   storageKey: "geumdongi-cart", // 폰에 장바구니를 저장하는 이름
   back: {
