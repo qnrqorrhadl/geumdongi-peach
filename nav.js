@@ -27,3 +27,18 @@ export function goBack() {
   history.replaceState({ depth: 0 }, "", "#"); // 주소로 바로 열었을 때는 앱 안 메인으로
   onRoute(currentRoute());
 }
+
+// 메인 화면으로 돌아간다. 앱 안에서 쌓인 화면 기록을 걷어내서, 폰 뒤로가기를 눌렀을 때 방금 있던 화면으로 되돌아가지 않게 한다.
+export function goHome() {
+  const toHome = () => {
+    history.replaceState({ depth: 0 }, "", "#");
+    onRoute(currentRoute());
+  };
+  const steps = depth();
+  if (steps === 0) {
+    toHome();
+    return;
+  }
+  window.addEventListener("popstate", toHome, { once: true });
+  history.go(-steps);
+}

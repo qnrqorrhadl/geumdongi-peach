@@ -12,6 +12,8 @@ export const CONFIG = {
   orderButton: "주문하기",
   productSuffix: "꿀 통조림",
   priceUnit: "원",
+  // 주문 문자를 받을 번호 (주인 휴대폰). 숫자만 써도 되고 010-1234-5678 처럼 써도 된다. 비어 있으면 주문이 막힌다.
+  orderPhone: "",
   maxQty: 99, // 한 상품당 장바구니에 담을 수 있는 최대 개수
   storageKey: "geumdongi-cart", // 폰에 장바구니를 저장하는 이름
   back: {
@@ -61,6 +63,7 @@ export const CONFIG = {
     cartButton: (count) => (count > 0 ? `장바구니 (${count})` : "장바구니"),
     qty: (n) => `${n}개`,
     total: "합계",
+    smsHeader: "[금동이네 꿀복통 주문]", // 주문 문자 맨 윗줄
   },
   cart: {
     title: "장바구니",
@@ -75,8 +78,10 @@ export const CONFIG = {
     cancel: "취소",
     emptyOrder: "장바구니가 비었어요.\n상품을 먼저 담아주세요",
     maxQty: (max) => `한 상품은 최대 ${max}개까지\n담을 수 있어요`,
-    confirmOrder: (summary, total) => `${summary}\n합계 ${total}\n\n주문할까요?`,
     clearConfirm: "장바구니를 모두 비울까요?",
-    done: "주문 접수 기능은 다음 단계에서 붙입니다",
+    noPhone: "주문을 받는 번호가 아직 정해지지 않았어요.\n잠시 후 다시 시도해 주세요",
+    moreOrder: "주문해 주셔서 감사해요!\n추가 주문을 하시겠어요?",
+    moreYes: "추가 주문",
+    moreNo: "아니요",
   },
 };

@@ -21,7 +21,6 @@ for (const p of CONFIG.products) {
 }
 assert.ok(Number.isInteger(CONFIG.maxQty) && CONFIG.maxQty >= 1);
 assert.ok(CONFIG.storageKey.length > 0);
-assert.ok(CONFIG.dialog.confirmOrder("요약", "합계값").includes("요약") && CONFIG.dialog.confirmOrder("요약", "합계값").includes("합계값"));
 
 // ===== 장바구니 계산 (cart.js) =====
 const items = [{ id: "a", name: "A", price: 1500 }, { id: "b", name: "B", price: 2000 }, { id: "c", name: "C", price: 10000 }];
@@ -121,6 +120,8 @@ for (const p of CONFIG.products) {
   assert.ok(p.detail.image.alt.includes(p.name), `${p.name} 이미지 설명에 상품 이름 없음`);
   assert.ok(p.detail.benefit.includes(p.name), `${p.name} 효능 글 없음`);
   assert.equal(typeof p.detail.making, "string", `${p.name} 만드는 과정 설명 자리 없음`);
+  assert.ok(p.detail.making.includes("손") && p.detail.making.includes("꿀"), `${p.name} 만드는 과정에 확인된 사실(손 손질·꿀) 빠짐`);
+  assert.ok(!p.detail.making.includes("기계"), `${p.name} 만드는 과정에 기계 언급 금지(사용자 요청)`);
   assert.equal(CONFIG.detail.benefitTitle(p.name), `${p.name}의 효능`);
 }
 
@@ -269,4 +270,40 @@ console.log("모든 테스트 통과");
   const wf = read(".github/workflows/build-apk.yml");
   assert.ok(wf.includes("workflow_dispatch") && wf.includes("assembleDebug") && wf.includes("apk-latest"), "워크플로 항목 누락");
   console.log("안드로이드 APK 구성 테스트 통과");
+}
+
+// ===== 주문 접수: 문자(SMS) =====
+{
+  const sms = await import("./sms.js");
+  assert.equal(sms.cleanPhone("010-1234-5678"), "01012345678");
+  assert.equal(sms.cleanPhone(" +82 10-1234-5678 "), "+821012345678");
+  assert.equal(sms.cleanPhone(undefined), "");
+  assert.ok(sms.isValidPhone("010-1234-5678") && sms.isValidPhone("01012345678") && sms.isValidPhone("+821012345678"));
+  assert.ok(!sms.isValidPhone("") && !sms.isValidPhone("123") && !sms.isValidPhone("abc") && !sms.isValidPhone(null), "잘못된 번호를 통과시킴");
+  assert.ok(sms.isIos({ userAgent: "Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X)" }));
+  assert.ok(sms.isIos({ userAgent: "Mozilla/5.0 (Macintosh)", platform: "MacIntel", maxTouchPoints: 5 }), "아이패드(데스크톱 표시) 인식 실패");
+  assert.ok(!sms.isIos({ userAgent: "Mozilla/5.0 (Linux; Android 14)", platform: "Linux armv8l", maxTouchPoints: 5 }));
+  assert.ok(!sms.isIos({ userAgent: "Mozilla/5.0 (Macintosh)", platform: "MacIntel", maxTouchPoints: 0 }), "맥 PC를 아이폰으로 착각");
+  const body = sms.buildOrderText("[주문]", "황도 꿀 통조림 2개\n백도 꿀 통조림 1개", "30,000원", "합계");
+  assert.equal(body, "[주문]\n황도 꿀 통조림 2개\n백도 꿀 통조림 1개\n합계 30,000원");
+  const android = sms.buildSmsUrl("010-1234-5678", body, false);
+  const iphone = sms.buildSmsUrl("010-1234-5678", body, true);
+  assert.ok(android.startsWith("sms:01012345678?body=") && iphone.startsWith("sms:01012345678&body="), "문자 주소 형식 틀림");
+  assert.equal(decodeURIComponent(android.split("body=")[1]), body, "문자 내용이 깨짐(줄바꿈·한글·쉼표)");
+  assert.ok(!android.includes("\n") && !android.includes(" "), "주소에 줄바꿈·공백이 그대로 들어감");
+
+  // 설정: 번호는 비어 있거나 올바른 번호여야 한다
+  assert.ok(CONFIG.orderPhone === "" || sms.isValidPhone(CONFIG.orderPhone), "config.orderPhone 형식 오류");
+  for (const k of ["noPhone", "moreOrder", "moreYes", "moreNo"]) assert.ok(CONFIG.dialog[k], `dialog.${k} 없음`);
+  assert.ok(CONFIG.order.smsHeader);
+  for (const k of ["done", "confirmOrder", "sentCheck", "sentYes", "sentNo", "thanks"]) assert.ok(!(k in CONFIG.dialog), `쓰지 않는 문구 dialog.${k} 남아 있음`);
+
+  // 흐름: 번호 확인 → (질문 없이) 비우고 문자 열기 → 추가 주문 질문 → 예: 장바구니 / 아니요: 메인. 문자 전에 묻는 확인 질문은 없다
+  const orderSrc = read("order.js");
+  const at = (s) => orderSrc.indexOf(s);
+  assert.ok(at("isValidPhone(CONFIG.orderPhone)") < at("clearCart()") && at("clearCart()") < at("location.href") && at("location.href") < at("moreOrder"), "주문 흐름 순서가 다름");
+  assert.ok(orderSrc.split("await ask(").length - 1 === 3, "묻는 창은 (빈 장바구니, 번호 없음, 추가 주문) 셋뿐이어야 함");
+  assert.ok(/if \(more\) \{[^}]*navigate\("#cart"\)[^}]*\} else \{[^}]*goHome\(\)/s.test(orderSrc), "추가 주문 → 장바구니, 아니요 → 메인 연결이 아님");
+  assert.ok(!/^import /m.test(read("sms.js")), "sms.js는 다른 파일을 import하지 않는다");
+  console.log("주문 접수(문자) 테스트 통과");
 }
