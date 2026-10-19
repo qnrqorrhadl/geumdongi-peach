@@ -1,4 +1,7 @@
 // 화면에 나오는 모든 글, 상품 목록, 가격, 장바구니 설정은 여기서만 정한다.
+// 세 복숭아 모두 만드는 과정이 같아서 한 곳에 둔다. 과정이 달라지면 상품별 making에 따로 쓴다.
+const MAKING = "금동이네에서 직접 만들어요. 복숭아 껍질과 씨는 하나하나 손으로 정성껏 손질하고, 달콤한 꿀을 넣어서 완성해요.";
+
 export const CONFIG = {
   title: "금동이네 꿀복통",
   tagline: {
@@ -23,7 +26,7 @@ export const CONFIG = {
       detail: {
         image: { src: "assets/hwangdo.webp", alt: "금빛 황도 꿀 통조림" },
         benefit: "황도는 노란 과육이 단단하고 향이 진한 복숭아예요. 베타카로틴과 식이섬유가 들어 있어요. 부드럽고 달콤해서 누구나 먹기 좋아요.",
-        making: "", // "꿀 통조림 이렇게 만들어져요" 설명. 나중에 채운다 (비어 있으면 제목만 보임)
+        making: MAKING, // "꿀 통조림 이렇게 만들어져요" 설명 (비우면 제목만 보임)
       },
     },
     {
@@ -33,7 +36,7 @@ export const CONFIG = {
       detail: {
         image: { src: "assets/baekdo.webp", alt: "핑크빛 백도 꿀 통조림" },
         benefit: "백도는 하얀 과육이 아주 부드럽고 달콤한 향이 진한 복숭아예요. 비타민 C와 식이섬유가 들어 있어요.",
-        making: "",
+        making: MAKING,
       },
     },
     {
@@ -43,7 +46,7 @@ export const CONFIG = {
       detail: {
         image: { src: "assets/cheondo.webp", alt: "오렌지빛 천도 꿀 통조림" },
         benefit: "천도는 껍질이 매끈하고 과육이 단단해서 새콤달콤한 맛이 살아 있어요. 식이섬유와 칼륨이 들어 있어요.",
-        making: "",
+        making: MAKING,
       },
     },
   ],
