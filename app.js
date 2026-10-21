@@ -6,6 +6,7 @@ import { initDetail, renderDetail } from "./detail.js";
 import { initOrderScreen } from "./orderScreen.js";
 import { initCartScreen } from "./cartScreen.js";
 import { registerOffline } from "./pwa.js";
+import { initBluetooth } from "./bluetooth.js";
 
 const $ = (id) => document.getElementById(id);
 
@@ -20,6 +21,7 @@ function showRoute(route) {
 }
 
 initDialog();
+initBluetooth();
 initStore();
 initHome();
 initDetail();

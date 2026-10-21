@@ -292,18 +292,45 @@ console.log("모든 테스트 통과");
   assert.equal(decodeURIComponent(android.split("body=")[1]), body, "문자 내용이 깨짐(줄바꿈·한글·쉼표)");
   assert.ok(!android.includes("\n") && !android.includes(" "), "주소에 줄바꿈·공백이 그대로 들어감");
 
-  // 설정: 번호는 비어 있거나 올바른 번호여야 한다
-  assert.ok(CONFIG.orderPhone === "" || sms.isValidPhone(CONFIG.orderPhone), "config.orderPhone 형식 오류");
-  for (const k of ["noPhone", "moreOrder", "moreYes", "moreNo"]) assert.ok(CONFIG.dialog[k], `dialog.${k} 없음`);
-  assert.ok(CONFIG.order.smsHeader);
-  for (const k of ["done", "confirmOrder", "sentCheck", "sentYes", "sentNo", "thanks"]) assert.ok(!(k in CONFIG.dialog), `쓰지 않는 문구 dialog.${k} 남아 있음`);
+  console.log("기존 문자 유틸리티 테스트 통과 (현재 주문은 Bluetooth 사용)");
+}
 
-  // 흐름: 번호 확인 → (질문 없이) 비우고 문자 열기 → 추가 주문 질문 → 예: 장바구니 / 아니요: 메인. 문자 전에 묻는 확인 질문은 없다
-  const orderSrc = read("order.js");
-  const at = (s) => orderSrc.indexOf(s);
-  assert.ok(at("isValidPhone(CONFIG.orderPhone)") < at("clearCart()") && at("clearCart()") < at("location.href") && at("location.href") < at("moreOrder"), "주문 흐름 순서가 다름");
-  assert.ok(orderSrc.split("await ask(").length - 1 === 3, "묻는 창은 (빈 장바구니, 번호 없음, 추가 주문) 셋뿐이어야 함");
-  assert.ok(/if \(more\) \{[^}]*navigate\("#cart"\)[^}]*\} else \{[^}]*goHome\(\)/s.test(orderSrc), "추가 주문 → 장바구니, 아니요 → 메인 연결이 아님");
-  assert.ok(!/^import /m.test(read("sms.js")), "sms.js는 다른 파일을 import하지 않는다");
-  console.log("주문 접수(문자) 테스트 통과");
+// Native SPP order flow is tested with asynchronous acknowledgements.
+{
+  const listeners = new Map();
+  globalThis.window = { addEventListener: (name, fn) => listeners.set(name, fn) };
+  globalThis.document = { getElementById: () => null };
+  const memory = new Map();
+  globalThis.localStorage = {
+    getItem: (key) => memory.get(key) ?? null,
+    setItem: (key, value) => memory.set(key, value),
+    removeItem: (key) => memory.delete(key),
+  };
+  const { quantitiesForCart, sendProductionOrder } = await import("./bluetooth.js");
+  assert.deepEqual(quantitiesForCart({ hwangdo: 3, baekdo: 2 }), { baekdo: 2, cheondo: 0, hwangdo: 3 });
+  assert.throws(() => quantitiesForCart({ baekdo: 100 }));
+  assert.throws(() => quantitiesForCart({}));
+  await assert.rejects(sendProductionOrder({ baekdo: 2 }), /Android APK/);
+  let failedId;
+  window.FactoryBluetooth = {
+    isConnected: () => true,
+    sendOrder: (json) => {
+      failedId = JSON.parse(json).id;
+      queueMicrotask(() => listeners.get("factory-bluetooth")({ detail: { type: "line", message: `ERROR|${failedId}|PC_OFFLINE` } }));
+      return true;
+    },
+  };
+  await assert.rejects(sendProductionOrder({ baekdo: 2 }), /PC_OFFLINE/);
+  assert.ok(memory.size > 0, "미확인 주문 ID를 보존해야 함");
+  await assert.rejects(sendProductionOrder({ baekdo: 1 }), /미확인/);
+  window.FactoryBluetooth.sendOrder = (json) => {
+    const pending = JSON.parse(json);
+    assert.equal(pending.id, failedId, "재전송은 같은 주문 ID를 사용해야 함");
+    queueMicrotask(() => listeners.get("factory-bluetooth")({ detail: { type: "line", message: `ACK|${pending.id}|2|producing` } }));
+    return true;
+  };
+  const receipt = await sendProductionOrder({ baekdo: 2 });
+  assert.equal(receipt.basket, "2");
+  assert.equal(memory.size, 0, "접수 확인 후에만 미확인 주문을 제거해야 함");
+  console.log("Bluetooth 수량 매핑 · 오류 · 재전송 · 접수 확인 테스트 통과");
 }

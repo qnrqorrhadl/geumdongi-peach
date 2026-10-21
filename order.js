@@ -1,42 +1,38 @@
 import { CONFIG } from "./config.js";
 import { ask } from "./dialog.js";
-import { getCart, clearCart } from "./store.js";
+import { getCart, changeQty } from "./store.js";
 import { lines, total, formatPrice } from "./cart.js";
-import { isValidPhone, isIos, buildSmsUrl, buildOrderText } from "./sms.js";
 import { goHome, goOrder } from "./nav.js";
+import { sendProductionOrder } from "./bluetooth.js";
 
-// 주문 흐름 (장바구니 화면의 주문하기). 접수 방식은 문자(SMS):
-// 문자 앱이 열리고 주문 내용이 미리 적혀 있어, 손님이 전송만 누르면 된다. 따로 확인 질문은 하지 않는다.
-// 문자 앱을 연 시점에 장바구니를 비운다 (돌아와서 같은 주문을 또 보내는 일을 막기 위해).
-// 돌아오면 추가 주문 여부를 묻는다: 추가 주문 → 주문 화면, 아니요 → 메인 화면.
+let submitting = false;
+
 export async function submitOrder() {
-  const cartNow = getCart();
-  const items = lines(cartNow, CONFIG.products);
-  if (items.length === 0) {
-    await ask(CONFIG.dialog.emptyOrder, { showCancel: false });
-    return;
-  }
-  if (!isValidPhone(CONFIG.orderPhone)) {
-    await ask(CONFIG.dialog.noPhone, { showCancel: false });
-    return;
-  }
-  const summary = items.map((l) => `${l.name} ${CONFIG.productSuffix} ${CONFIG.order.qty(l.qty)}`).join("\n");
-  const sum = formatPrice(total(cartNow, CONFIG.products), CONFIG.priceUnit);
-  const ok = await ask(CONFIG.dialog.confirmOrder(summary, sum), { showCancel: true });
-  if (!ok) return; // 취소하면 장바구니 그대로
-  const body = buildOrderText(CONFIG.order.smsHeader, summary, sum, CONFIG.order.total);
-
-  clearCart();
-  window.location.href = buildSmsUrl(CONFIG.orderPhone, body, isIos(navigator));
-
-  const more = await ask(CONFIG.dialog.moreOrder, {
-    showCancel: true,
-    okText: CONFIG.dialog.moreYes,
-    cancelText: CONFIG.dialog.moreNo,
-  });
-  if (more) {
-    goOrder();
-  } else {
-    goHome();
+  if (submitting) return;
+  submitting = true;
+  const submit = document.getElementById("cart-submit");
+  submit.disabled = true;
+  try {
+    const cartNow = { ...getCart() };
+    const items = lines(cartNow, CONFIG.products);
+    if (!items.length) {
+      await ask(CONFIG.dialog.emptyOrder, { showCancel: false });
+      return;
+    }
+    const summary = items.map((item) => `${item.name} ${item.qty}개`).join("\n");
+    const sum = formatPrice(total(cartNow, CONFIG.products), CONFIG.priceUnit);
+    if (!await ask(CONFIG.dialog.confirmOrder(summary, sum), { showCancel: true })) return;
+    const receipt = await sendProductionOrder(cartNow);
+    for (const item of items) changeQty(item.id, Math.max(0, (getCart()[item.id] || 0) - item.qty));
+    const position = receipt.basket === "WAIT" ? "바구니 배정 대기" : `${receipt.basket}번 바구니`;
+    const state = receipt.status === "collected" ? "이미 수거된 주문" : position;
+    await ask(`주문이 접수되었습니다.\n${state}\n주문번호: ${receipt.id}\n생산 현황은 장비 모니터에서 확인하세요.`, { showCancel: false });
+    const more = await ask(CONFIG.dialog.moreOrder, { showCancel: true, okText: CONFIG.dialog.moreYes, cancelText: CONFIG.dialog.moreNo });
+    more ? goOrder() : goHome();
+  } catch (error) {
+    await ask(error.message, { showCancel: false });
+  } finally {
+    submitting = false;
+    submit.disabled = false;
   }
 }

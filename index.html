@@ -2,6 +2,7 @@
 <html lang="ko">
 <head>
   <meta charset="utf-8">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self'; frame-src 'none'; object-src 'none'; base-uri 'self'">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta name="theme-color" content="#ffe9d6">
   <link rel="manifest" href="manifest.json">
@@ -14,6 +15,10 @@
   <title>금동이네 꿀복통</title>
 </head>
 <body>
+  <aside class="bluetooth-panel" aria-label="장비 연결">
+    <button id="bluetooth-connect" type="button">블루투스 연결</button>
+    <span id="bluetooth-status" role="status">연결 확인 중</span>
+  </aside>
   <!-- 메인 화면 -->
   <main id="home" class="screen">
     <header class="top">

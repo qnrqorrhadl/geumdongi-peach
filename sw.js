@@ -2,7 +2,7 @@
 // 온라인이면 항상 최신 파일을 받아오고(그래서 GitHub에 올리면 바로 반영), 받은 파일은 저장해 두었다가
 // 인터넷이 없을 때 꺼내 쓴다. 글씨체 조각은 한 번 쓰인 것만 저장된다.
 // 파일 목록(PRECACHE)을 바꾸면 VERSION도 올려서 옛 저장분을 정리한다.
-const VERSION = "v3";
+const VERSION = "v4-bluetooth";
 const CACHE = `geumdongi-${VERSION}`;
 const PRECACHE = [
   "./",
@@ -16,6 +16,7 @@ const PRECACHE = [
   "assets/cheondo.webp",
   "assets/icons/icon-192.png",
   "app.js",
+  "bluetooth.js",
   "pwa.js",
   "config.js",
   "cart.js",

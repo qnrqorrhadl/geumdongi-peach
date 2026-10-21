@@ -57,11 +57,11 @@
 
 ## 배포·설치
 
-- GitHub Pages로 공개: `https://qnrqorrhadl.github.io/geumdongi-peach/` (main 브랜치 루트). 파일을 올리면 1~2분 뒤 반영
+- GitHub Pages로 공개: `https://qwe773377-png.github.io/geumdongi-peach/` (main 브랜치 루트). 파일을 올리면 1~2분 뒤 반영
 - 홈 화면 설치(PWA): 안드로이드 크롬 "앱 설치", 아이폰 사파리 공유 → "홈 화면에 추가"
 - **파일을 추가·삭제하면 `sw.js`의 `PRECACHE` 목록과 `VERSION`도 같이 고친다** (`test.mjs`가 빠진 .js·이미지를 검사)
 - 서비스 워커는 옛 파일을 붙잡을 수 있어, 바뀐 게 안 보이면 앱을 완전히 닫았다 다시 연다
-- APK: GitHub 저장소 Actions 탭 → "APK 만들기" → Run workflow (android 폴더가 바뀌어 올라가면 자동 실행). 약 3~5분 뒤 `https://github.com/qnrqorrhadl/geumdongi-peach/releases/download/apk-latest/geumdongi-peach.apk`
+- APK: GitHub 저장소 Actions 탭 → "APK 만들기" → Run workflow (android 폴더가 바뀌어 올라가면 자동 실행). 약 3~5분 뒤 `https://github.com/qwe773377-png/geumdongi-peach/releases/download/apk-latest/geumdongi-peach.apk`
 - APK는 debug 서명(빌드마다 서명이 달라, 새 APK를 덮어 설치하려면 기존 앱을 지우고 설치). 웹 파일만 고칠 땐 재설치 불필요. 구글 플레이 등록 시에는 정식 서명·targetSdk 상향 필요
 - 이 작업 공간에서는 안드로이드 도구를 받을 수 없어 APK 빌드는 GitHub Actions에서만 검증된다 (코드는 문법만 확인)
 
