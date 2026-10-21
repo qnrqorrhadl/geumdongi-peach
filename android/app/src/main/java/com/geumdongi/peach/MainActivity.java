@@ -9,6 +9,8 @@ import android.webkit.WebResourceRequest;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
+import android.graphics.Bitmap;
+import android.content.pm.PackageManager;
 
 /**
  * 웹앱 주소를 그대로 열어 보여 주는 껍데기 앱.
@@ -18,6 +20,8 @@ import android.webkit.WebViewClient;
 public class MainActivity extends Activity {
     private WebView webView;
     private String appUrl;
+    private FactoryBluetooth factoryBluetooth;
+    private volatile boolean factoryPage = false;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -34,8 +38,15 @@ public class MainActivity extends Activity {
         settings.setAllowFileAccess(false);
         settings.setAllowContentAccess(false);
         settings.setCacheMode(WebSettings.LOAD_DEFAULT);
+        factoryBluetooth = new FactoryBluetooth(this);
+        webView.addJavascriptInterface(factoryBluetooth, "FactoryBluetooth");
 
         webView.setWebViewClient(new WebViewClient() {
+            @Override
+            public void onPageStarted(WebView view, String url, Bitmap favicon) {
+                factoryPage = isOwnSite(Uri.parse(url));
+            }
+
             @Override
             public boolean shouldOverrideUrlLoading(WebView view, WebResourceRequest request) {
                 Uri uri = request.getUrl();
@@ -66,8 +77,29 @@ public class MainActivity extends Activity {
     }
 
     private boolean isOwnSite(Uri uri) {
-        String host = Uri.parse(appUrl).getHost();
-        return host != null && host.equals(uri.getHost());
+        Uri own = Uri.parse(appUrl);
+        String host = own.getHost();
+        return "https".equals(uri.getScheme()) && host != null && host.equals(uri.getHost())
+                && uri.getUserInfo() == null && uri.getPath() != null
+                && uri.getPath().startsWith(own.getPath());
+    }
+
+    boolean isFactoryPage() { return factoryPage; }
+
+    void bluetoothEvent(String json) {
+        runOnUiThread(() -> {
+            if (webView != null && factoryPage) webView.evaluateJavascript(
+                "window.dispatchEvent(new CustomEvent('factory-bluetooth',{detail:" + json + "}));", null);
+        });
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] results) {
+        super.onRequestPermissionsResult(requestCode, permissions, results);
+        if (requestCode == FactoryBluetooth.PERMISSION_REQUEST && results.length > 0
+                && results[0] == PackageManager.PERMISSION_GRANTED) factoryBluetooth.chooseDevice();
+        else if (requestCode == FactoryBluetooth.PERMISSION_REQUEST) bluetoothEvent(
+            "{\"type\":\"connection\",\"connected\":false,\"message\":\"주변 기기 연결 권한이 필요합니다.\"}");
     }
 
     private void showOfflinePage(WebView view) {
@@ -99,6 +131,8 @@ public class MainActivity extends Activity {
 
     @Override
     protected void onDestroy() {
+        if (factoryBluetooth != null) factoryBluetooth.close();
+        factoryPage = false;
         if (webView != null) {
             webView.destroy();
         }
